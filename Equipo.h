@@ -1,0 +1,13 @@
+//
+// Created by Daniel Castillo on 11/04/2026.
+//
+
+#ifndef PROYECTO_SISTEMA_DE_PLANIFICACION_EQUIPO_H
+#define PROYECTO_SISTEMA_DE_PLANIFICACION_EQUIPO_H
+
+
+class Equipo {
+};
+
+
+#endif //PROYECTO_SISTEMA_DE_PLANIFICACION_EQUIPO_H
