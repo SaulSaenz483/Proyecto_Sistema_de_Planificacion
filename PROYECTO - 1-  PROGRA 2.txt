@@ -1,4 +1,0 @@
-PROYECTO - 1-  PROGRA 2
-
-Clase Base: Equipos / Equipo
-Derivadas: EquipoCritico y EquipoNoCritico
