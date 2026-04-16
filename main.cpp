@@ -3,26 +3,8 @@ using namespace std;
 
 int main()
 {
-    cout << "Hello World!" << endl;
-    cout << "Hello World!" << endl;
-    cout << "Buenos dias" << endl;
 
-
-    cout << "Hello World!" << endl;
-    cout << "Hello World!" << endl;
-    cout << "Buenos dias" << endl;
-    cout << "Hello World!" << endl;
-    cout << "Hello World!" << endl;
-    cout << "Buenos dias" << endl;
-    cout << "Hello World!" << endl;
-    cout << "Hello World!" << endl;
-    cout << "Buenos dias" << endl;
-    cout << "Hello World!" << endl;
-    cout << "Hello World!" << endl;
-    cout << "Buenos dias" << endl;
-    cout << "Hello World!" << endl;
-    cout << "Hello World!" << endl;
-    cout << "Buenos dias" << endl;
+    cout << "Nada se ha caido" << endl;
 
     return 0;
 }

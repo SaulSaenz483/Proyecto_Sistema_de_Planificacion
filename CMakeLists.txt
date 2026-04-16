@@ -5,4 +5,12 @@ set(CMAKE_CXX_STANDARD 20)
 
 add_executable(Proyecto_Sistema_de_Planificacion main.cpp
         Equipo.cpp
-        Equipo.h)
+        Equipo.h
+        IncidenciaLeve.cpp
+        IncidenciaLeve.h
+        IncidenciaGrave.cpp
+        IncidenciaGrave.h
+        IncidenciaMedia.cpp
+        IncidenciaMedia.h
+        Incidencia.cpp
+        Incidencia.h)
