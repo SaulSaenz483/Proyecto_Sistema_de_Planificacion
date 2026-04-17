@@ -7,16 +7,24 @@
 
 
 #include <string>
+
+class Equipo; //Declaracion adelantada
+
 using namespace std;
 
 class Incidencia {
-protected:
+
+    protected:
+
     int dia;
+    Equipo* equipoAsignado; //Creamos la dependencia mutua
+
+
 public:
-    Incidencia(int dia);
-    virtual ~Incidencia ();
-    virtual int relevancia() = 0;
-    virtual string getTipo() = 0;
+    Incidencia(int dia, Equipo* equipoAsignado); //Lo incluimos en el constructor a equipo
+   ~Incidencia ();
+    int gravedadIncidencia(); //No necesitamos mas clases incidencia, con un atributo y un metodo de su gravedad, podemos ver su nivel de incidencia en los equipos
+    string getTipo();
 
 };
 

@@ -3,8 +3,16 @@
 //
 
 #include "Incidencia.h"
+#include "Equipo.h"
 
 
-Incidencia::Incidencia(int dia) : dia(dia){}
+Incidencia::Incidencia(int dia, Equipo* e) : dia(dia), equipoAsignado(e){}
+
+int Incidencia:: gravedadIncidencia() {
+
+
+
+}
+string getTipo();
 
 Incidencia::~Incidencia() {}

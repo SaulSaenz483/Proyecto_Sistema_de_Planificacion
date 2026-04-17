@@ -6,10 +6,11 @@
 #define PROYECTO_SISTEMA_DE_PLANIFICACION_EQUIPO_H
 
 #include <string>
+#include<iostream>
 #include <vector>
 using namespace std;
 
-class Incidencia; // Declaracion adelantada
+class Incidencia;
 
 class Equipo {
 
@@ -34,7 +35,7 @@ public:
     int getTiempoInactivo()const ;
 
     void degradar();
-    void aplicarMantenimiento();
+    virtual void aplicarMantenimiento() = 0; //Necesitamos que equipo sea abstracta para usar el patron de diseño
     void aumentarTiempoInactivo();
     void resetTiempoInactivo();
 

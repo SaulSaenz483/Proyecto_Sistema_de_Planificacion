@@ -17,7 +17,16 @@ int Equipo::getCantidadIncidencias()
     int total = 0;
     for (auto inc : incidencias)
     {
-        total += inc -> relevancia(); // Polimorfismo
+        total += inc -> gravedadIncidencia(); // Polimorfismo
     }
     return total;
 }
+
+string Equipo:: getID() const {return id; }
+int Equipo:: getCriticidad() const {return criticidad; }
+double Equipo:: getEstado() const { return estado;}
+int Equipo:: getTiempoInactivo() const { return tiempoInactivo; }
+
+void Equipo:: degradar(){}
+void Equipo:: aumentarTiempoInactivo(){}
+void Equipo:: resetTiempoInactivo(){}
