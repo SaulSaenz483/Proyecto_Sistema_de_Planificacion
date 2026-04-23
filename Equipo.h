@@ -14,7 +14,7 @@ class Incidencia;
 
 class Equipo {
 
-private:
+protected:
     string id;
     int criticidad;
     double estado;
@@ -24,10 +24,12 @@ private:
 public:
 
     Equipo(string id, int criticidad, double estado);
+    virtual ~Equipo();
 
     // Gestion de incidencias
     void agregarIncidencia(Incidencia* inc);
-    int getCantidadIncidencias();
+    int getCantidadIncidencias()const;
+    int getPesoTotalIncidencias()const;
 
     string getID()const ;
     int getCriticidad()const ;

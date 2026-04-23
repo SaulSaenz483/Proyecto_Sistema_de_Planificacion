@@ -4,20 +4,46 @@
 
 #include "Equipo.h"
 #include "Incidencia.h"
+#include "Excepciones.h"
 
-Equipo::Equipo(string id, int criticidad, double estado) : id(id), criticidad(criticidad), estado(estado), tiempoInactivo(0){}
+Equipo::Equipo(string id, int criticidad, double estado) : id(id), criticidad(criticidad), estado(estado), tiempoInactivo(0)
+{
+    if (id.empty()) {
+        throw FormatoInvalidoException("El ID del equipo no puede estar vacio.");
+    }
+    if (criticidad < 1 || criticidad > 10) {
+        throw FormatoInvalidoException("La criticidad debe estar entre 1 y 10.");
+    }
+    if (estado < 0.0 || estado > 100.0) {
+        throw FormatoInvalidoException("El estado debe estar entre 0 y 100.");
+    }
+}
+
+Equipo::~Equipo()
+{
+    // El equipo no es dueño de las incidencias (solo las referencia),
+    // asi que no las eliminamos aqui. El sistema las maneja por separado.
+}
 
 void Equipo::agregarIncidencia(Incidencia* inc)
 {
-    incidencias.push_back(inc); // Consultar uso de push_back
+    if (inc == nullptr) {
+        throw OperacionInconsistenteException("No se puede agregar una incidencia nula al equipo " + id);
+    }
+    incidencias.push_back(inc);}
+
+int Equipo::getCantidadIncidencias()const
+{
+    return static_cast<int>(incidencias.size());
 }
 
-int Equipo::getCantidadIncidencias()
+int Equipo::getPesoTotalIncidencias()const
 {
     int total = 0;
+
     for (auto inc : incidencias)
     {
-        total += inc -> gravedadIncidencia(); // Polimorfismo
+        total += inc -> getPeso();
     }
     return total;
 }
@@ -28,5 +54,11 @@ double Equipo:: getEstado() const { return estado;}
 int Equipo:: getTiempoInactivo() const { return tiempoInactivo; }
 
 void Equipo:: degradar(){}
-void Equipo:: aumentarTiempoInactivo(){}
-void Equipo:: resetTiempoInactivo(){}
+void Equipo:: aumentarTiempoInactivo()
+{
+    tiempoInactivo++;
+}
+void Equipo:: resetTiempoInactivo()
+{
+    tiempoInactivo = 0;
+}

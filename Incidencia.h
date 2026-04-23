@@ -5,26 +5,41 @@
 #ifndef PROYECTO_SISTEMA_DE_PLANIFICACION_INCIDENCIA_H
 #define PROYECTO_SISTEMA_DE_PLANIFICACION_INCIDENCIA_H
 
-
 #include <string>
-
-class Equipo; //Declaracion adelantada
-
 using namespace std;
+class Equipo; // Declaracion adelantada
+
+enum class TipoIncidencia
+{
+    LEVE, MEDIA, GRAVE
+};
 
 class Incidencia {
 
-    protected:
-
-    int dia;
-    Equipo* equipoAsignado; //Creamos la dependencia mutua
-
+private:
+    TipoIncidencia tipo;
+    string descripcion;
+    int diaRegistro;
+    Equipo* equipoAsociado;
 
 public:
-    Incidencia(int dia, Equipo* equipoAsignado); //Lo incluimos en el constructor a equipo
-   ~Incidencia ();
-    int gravedadIncidencia(); //No necesitamos mas clases incidencia, con un atributo y un metodo de su gravedad, podemos ver su nivel de incidencia en los equipos
-    string getTipo();
+    Incidencia(TipoIncidencia tipo, string descripcion, int diaRegistro);
+
+    // Retorna el tipo enum
+    TipoIncidencia getTipo() const;
+
+    string getTipoString() const;
+
+    int getPeso()const;
+
+    string getDescripcion()const;
+    int getDiaRegistro()const;
+
+    // Conexion con Equipo
+
+    void asignarEquipo(Equipo* equipo);
+    Equipo* getEquipo()const;
+
 
 };
 
