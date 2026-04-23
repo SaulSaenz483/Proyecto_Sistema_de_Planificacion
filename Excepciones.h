@@ -39,7 +39,7 @@ public:
 class OperacionInconsistenteException : public SistemaException
 {
 public:
-    explicit OperacionInconsistenteException(const string& mensaje) : SistemaException("Operacion inconsistente: " + mensaje) {}
+    explicit OperacionInconsistenteException(const string& mensaje) : SistemaException("Operacion inconsistente: " + mensaje) {} //Para la clase sistema
 };
 
 #endif //PROYECTO_SISTEMA_DE_PLANIFICACION_EXCEPCIONES_H

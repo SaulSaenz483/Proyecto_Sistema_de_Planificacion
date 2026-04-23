@@ -11,11 +11,17 @@ class EquipoEstandar:public Equipo {
 
 public:
 
-    EquipoEstandar(string id, int criticidad, double estado);
+    EquipoEstandar(string id, int criticidad, double estado):Equipo(id,criticidad,estado){}
 
+    void degradar() override;
     void aplicarMantenimiento()override;
 
+
+
+
 };
+
+
 
 
 #endif //PROYECTO_SISTEMA_DE_PLANIFICACION_EQUIPOESTANDAR_H

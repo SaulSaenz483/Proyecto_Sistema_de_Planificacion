@@ -34,7 +34,7 @@ void Equipo::agregarIncidencia(Incidencia* inc)
 
 int Equipo::getCantidadIncidencias()const
 {
-    return static_cast<int>(incidencias.size());
+    return static_cast<int>(incidencias.size()); //Retorna el tam del vector (las incidencias activas)
 }
 
 int Equipo::getPesoTotalIncidencias()const
@@ -53,7 +53,14 @@ int Equipo:: getCriticidad() const {return criticidad; }
 double Equipo:: getEstado() const { return estado;}
 int Equipo:: getTiempoInactivo() const { return tiempoInactivo; }
 
-void Equipo:: degradar(){}
+double Equipo::calcularPrioridad() const
+{
+    double prioridad = (criticidad * 0.5)+ (getCantidadIncidencias() * 0.3)+ (tiempoInactivo * 0.2);
+
+    return prioridad;
+}
+
+
 void Equipo:: aumentarTiempoInactivo()
 {
     tiempoInactivo++;

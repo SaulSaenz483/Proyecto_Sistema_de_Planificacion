@@ -4,10 +4,26 @@
 
 #include "EquipoEstandar.h"
 
-EquipoEstandar::EquipoEstandar(string id, int criticidad, double estado):Equipo(id,criticidad,estado) {
+
+
+void EquipoEstandar::degradar()
+{
+    double desgaste = 1.0 * criticidad;v //Tiene mayor aguante que equipos criticos
+    estado = estado - desgaste;
+
+    if (estado <0)
+    {
+        estado = 0;
+    }
 
 }
 
-void EquipoEstandar::aplicarMantenimiento() {
+void EquipoEstandar::aplicarMantenimiento()  {
     cout <<" Realizando mantenimiento al equipo estandar: " << getID() << endl;
+
+    estado = 100.0;
+
+    resetTiempoInactivo();
+
+
 }

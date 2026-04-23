@@ -13,4 +13,6 @@ add_executable(Proyecto_Sistema_de_Planificacion main.cpp
         EquipoEstandar.cpp
         EquipoEstandar.h
         Excepciones.h
+        Sistema.cpp
+        Sistema.h
 )

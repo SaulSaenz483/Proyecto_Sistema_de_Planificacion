@@ -11,7 +11,7 @@ descripcion(descripcion),diaRegistro(diaRegistro), equipoAsociado(nullptr)
 {
     if (descripcion.empty())
     {
-        throw FormatoInvalidoException("Las descripcion de la incidecidencia no puede estar vacia");
+        throw FormatoInvalidoException("Las descripcion de la incidencia no puede estar vacia");
     }
     if (diaRegistro < 1 || diaRegistro > 30)
     {
