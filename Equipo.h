@@ -14,17 +14,19 @@ class Incidencia;
 
 class Equipo {
 
-private:
+protected:
     string id;
     int criticidad;
     double estado;
     int tiempoInactivo;
 
     vector<Incidencia*> incidencias;
+
+
 public:
 
     Equipo(string id, int criticidad, double estado);
-
+    virtual ~Equipo(){}
     // Gestion de incidencias
     void agregarIncidencia(Incidencia* inc);
     int getCantidadIncidencias();
@@ -34,7 +36,8 @@ public:
     double getEstado()const ;
     int getTiempoInactivo()const ;
 
-    void degradar();
+    double calcularPrioridad();
+    virtual void degradar()=0;
     virtual void aplicarMantenimiento() = 0; //Necesitamos que equipo sea abstracta para usar el patron de diseño
     void aumentarTiempoInactivo();
     void resetTiempoInactivo();

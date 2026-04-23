@@ -22,11 +22,20 @@ int Equipo::getCantidadIncidencias()
     return total;
 }
 
+double Equipo::calcularPrioridad()
+{
+
+    double prioridad = (criticidad * 0.5) +
+                       (getCantidadIncidencias() * 0.3) +
+                       (tiempoInactivo * 0.2);
+    return prioridad;
+}
+
 string Equipo:: getID() const {return id; }
 int Equipo:: getCriticidad() const {return criticidad; }
 double Equipo:: getEstado() const { return estado;}
 int Equipo:: getTiempoInactivo() const { return tiempoInactivo; }
 
-void Equipo:: degradar(){}
-void Equipo:: aumentarTiempoInactivo(){}
-void Equipo:: resetTiempoInactivo(){}
+
+void Equipo:: aumentarTiempoInactivo(){tiempoInactivo++;} //Le suma 1 al contador
+void Equipo:: resetTiempoInactivo(){tiempoInactivo=0;} //Lo devuelve a 0 despues de un mantenimiento
