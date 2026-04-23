@@ -4,13 +4,32 @@
 
 #include "EquipoCritico.h"
 
-EquipoCritico::EquipoCritico(string id, int criticidad, double estado): Equipo(id,criticidad,estado) {
 
+void EquipoCritico::degradar()
+{
+    double desgaste = 2.5 * criticidad;
+    estado = estado - desgaste;
+
+    if (estado <0)
+    {
+        estado = 0; //Evitamos que de numeros negativos
+    }
 
 }
 
+
 void EquipoCritico:: aplicarMantenimiento() {
     cout <<" Realizando mantenimiento al equipo critico: " << getID() << endl;
+
+    calibrarMotor();
+
+    estado = 100.0;
+    resetTiempoInactivo();
+}
+
+void EquipoCritico::calibrarMotor()
+{
+    cout << "->Calibrando motor..."<<endl;
 }
 
 

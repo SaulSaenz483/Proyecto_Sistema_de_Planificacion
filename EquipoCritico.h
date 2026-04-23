@@ -10,9 +10,12 @@
 class EquipoCritico: public Equipo {
 
 public:
-    EquipoCritico(string id, int criticidad, double estado);
+    EquipoCritico(string id, int criticidad, double estado): Equipo(id,criticidad,estado){}
 
+    void degradar() override;
     void aplicarMantenimiento() override; //Cumplimos el contrato de equipo
+
+    //Metodo especial especifico para los equipos criticos
     void calibrarMotor();
 
 
