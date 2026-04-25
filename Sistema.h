@@ -28,6 +28,7 @@ private:
     //Algoritmos propios obligatorios segun el pdf
 
     void quickSortEquipos(int low, int high);
+    int particionEquipos(int low, int high);
     Equipo* busquedaBinariaEquipo(const string& id);
 
     // Calculos globales

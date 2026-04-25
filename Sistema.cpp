@@ -52,7 +52,7 @@ Equipo* Sistema::fabricarEquipo(const string& linea)
 
 }
 
-Incidencia* fabricarIncidencia(const string& linea)
+Incidencia* Sistema::fabricarIncidencia(const string& linea)
 {
     stringstream ss(linea);
     string prefijo, idEquipo, tokenSeveridad, tokenDia;
@@ -106,8 +106,114 @@ Incidencia* fabricarIncidencia(const string& linea)
 
     return nuevaInc;
 
+}
 
 
+int Sistema::particionEquipos(int low, int high)
+{
+    //Tomar prioridad del ultimo equipo como pivote
+    double pivotPrioridad = inventario[high]->calcularPrioridad();
 
+    //Indice del elemento mas grande
+
+    int i = (low -1);
+
+    for (int j = low; j <= high-1; j++)
+    {
+        if (inventario[j]->calcularPrioridad() >= pivotPrioridad) //Vamos de forma descendente
+        {
+            i++; //Avanzar el indice
+
+            //Hacemos un intercambio de punteros en el vector
+
+            Equipo* temp = inventario[i];
+            inventario[i] = inventario[j];
+            inventario[j] = temp;
+
+        }
+    }
+
+    //Colocamos el pivote en su lugar
+
+    Equipo* temp = inventario[i+1];
+    inventario[i+1] = inventario[high];
+    inventario[high] = temp;
+
+    return (i+1); //Retornamos la posicion final del pivote
 
 }
+
+void Sistema::quickSortEquipos(int low, int high)
+{
+
+    if (low < high)
+    {
+
+        // pi es el índice donde quedó el pivote, en este caso ya estaria en su posicion final
+
+        int pi = particionEquipos(low, high);
+
+        //Ordenamos recursivamente la mitad izquierda
+        quickSortEquipos(low, pi-1);
+
+        //Ordenamos recursivamente la mitad derecha
+        quickSortEquipos(pi+1, high);
+
+    }
+
+}
+
+Equipo* Sistema::busquedaBinariaEquipo(const string& idBusqueda)
+{
+    int izquierda = 0;
+    int derecha = inventario.size() - 1;
+
+    while (izquierda<= derecha)
+    {
+        int medio = izquierda + (derecha - izquierda)/2;
+        string idActual = inventario[medio]->getID();
+
+        if (idActual == idBusqueda)
+        {
+            return inventario[medio];
+        }
+
+        if (idActual < idBusqueda)
+        {
+            izquierda = medio + 1; //Si idActual es mayor alfanumericamente, ignora la izquierda)
+        } else {
+            derecha = medio - 1; //Si es menor, ignora la derecha
+        }
+
+    }
+    return nullptr; //Regresa nulo si el equipo no existe
+}
+
+double Sistema::calcularRiesgoGlobal() const
+{
+    double riesgoTotal = 0.0;
+
+    //Recorremos el historial completo de incidencias
+
+    for (Incidencia* inc : historialIncidencias)
+    {
+        riesgoTotal+= inc->getPeso();
+    }
+    return riesgoTotal;
+}
+
+
+int Sistema::calcularBacklogPendiente() const {
+    int totalIncidencias;
+
+    for (Equipo* eq: inventario)
+    {
+        totalIncidencias += eq->getCantidadIncidencias();
+    }
+
+    return totalIncidencias;
+
+}
+
+
+
