@@ -8,8 +8,8 @@
 
 void EquipoEstandar::degradar()
 {
-    double desgaste = 1.0 * criticidad;v //Tiene mayor aguante que equipos criticos
-    estado = estado - desgaste;
+    double desgaste = 1.0 * criticidad; //Tiene mayor aguante que equipos criticos
+    estado -= desgaste;
 
     if (estado <0)
     {

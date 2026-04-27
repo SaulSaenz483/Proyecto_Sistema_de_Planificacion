@@ -8,7 +8,7 @@
 void EquipoCritico::degradar()
 {
     double desgaste = 2.5 * criticidad;
-    estado = estado - desgaste;
+    estado -= desgaste;
 
     if (estado <0)
     {
@@ -25,6 +25,7 @@ void EquipoCritico:: aplicarMantenimiento() {
 
     estado = 100.0;
     resetTiempoInactivo();
+    limpiarIncidencias();
 }
 
 void EquipoCritico::calibrarMotor()

@@ -28,6 +28,7 @@ public:
 
     // Gestion de incidencias
     void agregarIncidencia(Incidencia* inc);
+    void limpiarIncidencias();
     int getCantidadIncidencias()const;
     int getPesoTotalIncidencias()const;
 

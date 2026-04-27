@@ -14,6 +14,8 @@ enum class TipoIncidencia
     LEVE, MEDIA, GRAVE
 };
 
+
+
 class Incidencia {
 
 private:
@@ -21,6 +23,7 @@ private:
     string descripcion;
     int diaRegistro;
     Equipo* equipoAsociado;
+    bool activa = false;
 
 public:
     Incidencia(TipoIncidencia tipo, string descripcion, int diaRegistro);
@@ -40,6 +43,8 @@ public:
     void asignarEquipo(Equipo* equipo);
     Equipo* getEquipo()const;
 
+    bool estaActiva()const;
+    void activar();
 
 };
 

@@ -69,3 +69,5 @@ Equipo* Incidencia::getEquipo() const
 {
     return equipoAsociado;
 }
+bool Incidencia::estaActiva() const { return activa; }
+void Incidencia::activar() { activa = true; }

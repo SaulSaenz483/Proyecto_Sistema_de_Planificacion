@@ -53,9 +53,13 @@ int Equipo:: getCriticidad() const {return criticidad; }
 double Equipo:: getEstado() const { return estado;}
 int Equipo:: getTiempoInactivo() const { return tiempoInactivo; }
 
+void Equipo::limpiarIncidencias() {
+    incidencias.clear();
+}
+
 double Equipo::calcularPrioridad() const
 {
-    double prioridad = (criticidad * 0.5)+ (getCantidadIncidencias() * 0.3)+ (tiempoInactivo * 0.2);
+    double prioridad = (criticidad * 0.5)+ (getPesoTotalIncidencias() * 0.3)+ (tiempoInactivo * 0.2);
 
     return prioridad;
 }
