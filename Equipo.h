@@ -8,6 +8,7 @@
 #include <string>
 #include<iostream>
 #include <vector>
+#include "Estrategias.h"
 using namespace std;
 
 class Incidencia;
@@ -21,6 +22,8 @@ protected:
     int tiempoInactivo;
 
     vector<Incidencia*> incidencias;
+    EstrategiaMantenimiento* estrategiaActual;
+
 public:
 
     Equipo(string id, int criticidad, double estado);
@@ -42,6 +45,8 @@ public:
     double calcularPrioridad()const;
     void aumentarTiempoInactivo();
     void resetTiempoInactivo();
+    void setEstrategia(EstrategiaMantenimiento* nuevaEstrategia);
+    void setEstado(double nuevoEstado);
 
 };
 

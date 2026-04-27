@@ -6,6 +6,7 @@
 #include "EquipoCritico.h" //Para poder crear los objetos
 #include "EquipoEstandar.h"
 #include "Excepciones.h"
+#include "Estrategias.h"
 #include<sstream> //Para cortar los strings
 #include <iostream>
 
@@ -260,9 +261,33 @@ void Sistema::seleccionarYMantener(vector<Equipo*>& atendidos)
     for (int i = 0; i < limite; i++) {
         atendidos.push_back(inventario[i]);
     }
-    // Primero registrar, luego mantener
+
+    MantenimientoPreventivo prev;
+    MantenimientoPreventivo corr;
+    MantenimientoEmergencia emer;
+
+
+
     for (Equipo* eq : atendidos) {
+        // Decidimos la estrategia según el estado del equipo
+        if (eq->getEstado() < 30.0 || eq->getCantidadIncidencias() > 5) {
+            eq->setEstrategia(&emer); // Está en las últimas
+        }
+        else if (eq->getEstado() < 60.0) {
+            eq->setEstrategia(&corr);  // Está a medias
+        }
+        else {
+            eq->setEstrategia(&prev);  // Solo un cariñito
+        }
+
+        // El equipo se repara según la estrategia que le acabamos de inyectar
         eq->aplicarMantenimiento();
+
+        // --- REQUISITO OBLIGATORIO DEL PDF: dynamic_cast ---
+        EquipoCritico* eqCritico = dynamic_cast<EquipoCritico*>(eq);
+        if (eqCritico != nullptr) {
+            eqCritico->calibrarMotor();
+        }
     }
 }
 
@@ -336,15 +361,23 @@ void Sistema::generarIncidenciasAleatorias()
 // RF1 — cargarDatosIniciales
 // ================================================================
 
-void Sistema::cargarDatosIniciales(const string& rutaArchivo)
+// ================================================================
+// RF1 — cargarDatosIniciales (Con Búsqueda Optimizada - Binaria)
+// ================================================================
+
+void Sistema::cargarDatosIniciales(const string& rutaArchivo) //Con busqueda binaria
 {
     ifstream archivo(rutaArchivo);
     if (!archivo.is_open())
         throw ArchivoInvalidoException("No se pudo abrir: " + rutaArchivo);
 
     string linea;
-    int    numLinea = 0;
+    int numLinea = 0;
 
+    // Vector temporal para guardar los textos de las incidencias y procesarlas al final
+    vector<string> lineasIncidencias;
+
+    // --- PASO 1: Leer archivo y extraer solo los equipos ---
     while (getline(archivo, linea)) {
         numLinea++;
 
@@ -354,45 +387,60 @@ void Sistema::cargarDatosIniciales(const string& rutaArchivo)
 
         try {
             if (linea.find("INC") == 0) {
-                // --- Incidencia ---
-                string      idEquipo;
-                Incidencia* inc = fabricarIncidencia(linea, idEquipo);
-
-                // Buscar el equipo con busqueda lineal (inventario aun no esta
-                // ordenado por ID en este momento, sino por orden de insercion).
-                Equipo* destino = nullptr;
-                for (Equipo* eq : inventario) {
-                    if (eq->getID() == idEquipo) { destino = eq; break; }
-                }
-
-                // Vinculamos la incidencia con su equipo para que activarIncidenciasDia
-                // pueda encontrarlo mas tarde. NO la agregamos al equipo todavia.
-                if (destino != nullptr) {
-                    inc->asignarEquipo(destino);
-                } else {
-                    cerr << "  [ADVERTENCIA] Linea " << numLinea
-                         << ": equipo '" << idEquipo << "' no encontrado. Incidencia guardada sin equipo.\n";
-                }
-
-                historialIncidencias.push_back(inc);
-
+                // Si es incidencia, la guardamos temporalmente como texto
+                lineasIncidencias.push_back(linea);
             } else {
-                // --- Equipo ---
+                // Si es un equipo, lo fabricamos y lo metemos al inventario
                 Equipo* eq = fabricarEquipo(linea);
                 inventario.push_back(eq);
             }
-
         } catch (const SistemaException& e) {
             cerr << "  [ADVERTENCIA] Linea " << numLinea
                  << " ignorada: " << e.what() << "\n";
         }
     }
-
     archivo.close();
 
-    cout << "  Carga completa: "
-         << inventario.size()          << " equipos, "
-         << historialIncidencias.size()<< " incidencias en historial.\n";
+    // --- PASO 2: Ordenar el inventario alfabéticamente por ID
+    // Implementamos un Bubble Sort rápido
+    int n = inventario.size();
+    for (int i = 0; i < n - 1; i++) {
+        for (int j = 0; j < n - i - 1; j++) {
+            if (inventario[j]->getID() > inventario[j + 1]->getID()) {
+                // Intercambio de punteros si el ID de la izquierda es "mayor" que el de la derecha
+                Equipo* temp = inventario[j];
+                inventario[j] = inventario[j + 1];
+                inventario[j + 1] = temp;
+            }
+        }
+    }
+
+    // --- PASO 3: Procesar las incidencias usando Búsqueda Binaria ---
+    for (const string& lineaInc : lineasIncidencias) {
+        try {
+            string idEquipo;
+            Incidencia* inc = fabricarIncidencia(lineaInc, idEquipo);
+
+            //  Usamos la búsqueda optimizada
+            Equipo* destino = busquedaBinariaEquipo(idEquipo);
+
+            if (destino != nullptr) {
+                inc->asignarEquipo(destino); // Lo vinculamos
+            } else {
+                cerr << "  [ADVERTENCIA] Equipo '" << idEquipo
+                     << "' no encontrado para la incidencia. Guardada sin equipo.\n";
+            }
+
+            historialIncidencias.push_back(inc);
+
+        } catch (const SistemaException& e) {
+            cerr << "  [ADVERTENCIA] Error procesando incidencia: " << e.what() << "\n";
+        }
+    }
+
+    cout << "  Carga completa y optimizada: "
+         << inventario.size() << " equipos ordenados por ID, "
+         << historialIncidencias.size() << " incidencias vinculadas.\n";
 }
 
 // ================================================================

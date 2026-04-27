@@ -16,6 +16,8 @@ add_executable(Proyecto_Sistema_de_Planificacion
         Excepciones.h
         Sistema.cpp
         Sistema.h
+        Estrategias.cpp
+        Estrategias.h
 )
 
 # Copiar datos.txt al directorio de build automaticamente cada vez que se compila

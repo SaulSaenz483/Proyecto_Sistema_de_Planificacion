@@ -6,7 +6,7 @@
 #include "Incidencia.h"
 #include "Excepciones.h"
 
-Equipo::Equipo(string id, int criticidad, double estado) : id(id), criticidad(criticidad), estado(estado), tiempoInactivo(0)
+Equipo::Equipo(string id, int criticidad, double estado) : id(id), criticidad(criticidad), estado(estado), tiempoInactivo(0),estrategiaActual(nullptr)
 {
     if (id.empty()) {
         throw FormatoInvalidoException("El ID del equipo no puede estar vacio.");
@@ -72,4 +72,25 @@ void Equipo:: aumentarTiempoInactivo()
 void Equipo:: resetTiempoInactivo()
 {
     tiempoInactivo = 0;
+}
+
+void Equipo::setEstrategia(EstrategiaMantenimiento* nuevaEstrategia)
+{
+    estrategiaActual = nuevaEstrategia;
+}
+
+void Equipo::aplicarMantenimiento()
+{
+    if (estrategiaActual != nullptr) {
+        estrategiaActual->ejecutarMantenimiento(this);
+    } else {
+        // Por si acaso se nos olvida asignarle una, hacemos un mantenimiento base
+        this->estado += 10;
+        this->limpiarIncidencias();
+    }
+}
+
+void Equipo::setEstado(double nuevoEstado)
+{
+    this->estado = nuevoEstado;
 }
