@@ -17,17 +17,6 @@ void EquipoCritico::degradar()
 
 }
 
-
-void EquipoCritico:: aplicarMantenimiento() {
-    cout <<" Realizando mantenimiento al equipo critico: " << getID() << endl;
-
-    calibrarMotor();
-
-    estado = 100.0;
-    resetTiempoInactivo();
-    limpiarIncidencias();
-}
-
 void EquipoCritico::calibrarMotor()
 {
     cout << "->Calibrando motor..."<<endl;

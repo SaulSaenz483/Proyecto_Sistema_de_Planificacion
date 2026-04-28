@@ -41,7 +41,7 @@ public:
     int getTiempoInactivo()const ;
 
     virtual void degradar()=0;
-    virtual void aplicarMantenimiento() = 0; //Necesitamos que equipo sea abstracta para usar el patron de diseño
+    virtual void aplicarMantenimiento();
     double calcularPrioridad()const;
     void aumentarTiempoInactivo();
     void resetTiempoInactivo();

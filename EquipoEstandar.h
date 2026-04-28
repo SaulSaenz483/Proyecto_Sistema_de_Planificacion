@@ -14,8 +14,6 @@ public:
     EquipoEstandar(string id, int criticidad, double estado):Equipo(id,criticidad,estado){}
 
     void degradar() override;
-    void aplicarMantenimiento()override;
-
 
 
 

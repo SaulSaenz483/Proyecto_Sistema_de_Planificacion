@@ -263,7 +263,7 @@ void Sistema::seleccionarYMantener(vector<Equipo*>& atendidos)
     }
 
     MantenimientoPreventivo prev;
-    MantenimientoPreventivo corr;
+    MantenimientoCorrectivo corr;
     MantenimientoEmergencia emer;
 
 
@@ -357,9 +357,8 @@ void Sistema::generarIncidenciasAleatorias()
 // Las incidencias aleatorias ya se activan directamente en generarIncidenciasAleatorias.
 
 
-// ================================================================
-// RF1 — cargarDatosIniciales
-// ================================================================
+
+// cargarDatosIniciales
 
 // ================================================================
 // RF1 — cargarDatosIniciales (Con Búsqueda Optimizada - Binaria)
@@ -443,9 +442,9 @@ void Sistema::cargarDatosIniciales(const string& rutaArchivo) //Con busqueda bin
          << historialIncidencias.size() << " incidencias vinculadas.\n";
 }
 
-// ================================================================
-// procesarDia — un ciclo completo (RF3 a RF8)
-// ================================================================
+
+// procesarDia - un ciclo completo
+
 
 void Sistema::procesarDia()
 {
@@ -456,6 +455,9 @@ void Sistema::procesarDia()
 
     // RF2 (paso 2): aparecen las incidencias programadas para hoy
     activarIncidenciasDia();
+
+    // Generar incidencias aleatorias del dia (hasta el tope de 300)
+    generarIncidenciasAleatorias();
 
     // RF4 + RF5: calcular prioridad y ordenar de mayor a menor
     quickSortEquipos(0, (int)inventario.size() - 1);
@@ -473,9 +475,8 @@ void Sistema::procesarDia()
     diaActual++;
 }
 
-// ================================================================
-// ejecutarSimulacion — RF2: exactamente 30 dias
-// ================================================================
+// ejecutarSimulacion - 30 dias
+
 
 void Sistema::ejecutarSimulacion()
 {
@@ -518,9 +519,9 @@ void Sistema::ejecutarSimulacion()
     cout << "===================================================\n";
 }
 
-// ================================================================
-// generarReporteDiario — RF9 + RF10
-// ================================================================
+
+// generarReporteDiario
+
 
 void Sistema::generarReporteDiario(const vector<Equipo*>& atendidos)
 {
@@ -531,52 +532,56 @@ void Sistema::generarReporteDiario(const vector<Equipo*>& atendidos)
     else if (riesgo >= 10) nivelRiesgo = "MEDIO";
     else                   nivelRiesgo = "BAJO";
 
-    // --- Consola ---
-    cout << "Top prioridad: ";
+    int backlog = calcularBacklogPendiente();
+
+    // --- Consola: formato exacto del enunciado ---
+    cout << "Top prioridad : ";
     for (int i = 0; i < (int)atendidos.size(); i++) {
         cout << atendidos[i]->getID()
              << " (" << atendidos[i]->calcularPrioridad() << ")";
-        if (i < (int)atendidos.size() - 1) cout << ", ";
+        if (i < (int)atendidos.size() - 1) cout << " , ";
     }
     cout << "\n";
-    cout << "Asignados    : ";
+    cout << "Asignados : ";
     for (int i = 0; i < (int)atendidos.size(); i++) {
         cout << atendidos[i]->getID();
-        if (i < (int)atendidos.size() - 1) cout << ", ";
+        if (i < (int)atendidos.size() - 1) cout << " , ";
     }
     cout << "\n";
-    cout << "Backlog      : " << calcularBacklogPendiente() << "\n";
-    cout << "Riesgo global: " << nivelRiesgo << " (" << riesgo << ")\n";
+    cout << "Backlog pendiente : " << backlog << "\n";
+    cout << "Riesgo global : "     << nivelRiesgo << "\n";
 
-    // --- Archivo ---
+    // --- Archivo: mismo formato del enunciado + detalle extra para trazabilidad ---
     if (!archivoReporte.is_open()) return;
 
-    archivoReporte << "----------------------------------------------------\n";
-    archivoReporte << "DIA " << diaActual << "\n";
-    archivoReporte << "----------------------------------------------------\n";
-
-    archivoReporte << "Equipos atendidos:\n";
-    for (Equipo* eq : atendidos) {
-        archivoReporte << "  - " << eq->getID()
-                       << " | prioridad="   << eq->calcularPrioridad()
-                       << " | estado="      << eq->getEstado()
-                       << " | incidencias=" << eq->getCantidadIncidencias()
-                       << "\n";
+    archivoReporte << "\nDia " << diaActual << "\n";
+    archivoReporte << "Top prioridad : ";
+    for (int i = 0; i < (int)atendidos.size(); i++) {
+        archivoReporte << atendidos[i]->getID()
+                       << " (" << atendidos[i]->calcularPrioridad() << ")";
+        if (i < (int)atendidos.size() - 1) archivoReporte << " , ";
     }
+    archivoReporte << "\n";
+    archivoReporte << "Asignados : ";
+    for (int i = 0; i < (int)atendidos.size(); i++) {
+        archivoReporte << atendidos[i]->getID();
+        if (i < (int)atendidos.size() - 1) archivoReporte << " , ";
+    }
+    archivoReporte << "\n";
+    archivoReporte << "Backlog pendiente : " << backlog     << "\n";
+    archivoReporte << "Riesgo global : "     << nivelRiesgo << "\n";
 
-    archivoReporte << "Equipos pendientes:\n";
+    // Detalle adicional de equipos pendientes (trazabilidad RF9)
+    archivoReporte << "Equipos pendientes de atencion:\n";
     for (Equipo* eq : inventario) {
         bool atendido = false;
         for (Equipo* at : atendidos)
             if (at->getID() == eq->getID()) { atendido = true; break; }
-        if (!atendido) {
-            archivoReporte << "  - " << eq->getID()
-                           << " | prioridad=" << eq->calcularPrioridad()
-                           << " | estado="    << eq->getEstado()
-                           << "\n";
+        if (!atendido && eq->getCantidadIncidencias() > 0) {
+            archivoReporte << "  " << eq->getID()
+                           << " (prioridad=" << eq->calcularPrioridad()
+                           << ", incidencias=" << eq->getCantidadIncidencias() << ")\n";
         }
     }
-
-    archivoReporte << "Backlog total : " << calcularBacklogPendiente() << "\n";
-    archivoReporte << "Riesgo global : " << nivelRiesgo << " (" << riesgo << ")\n\n";
+    archivoReporte << "\n";
 }

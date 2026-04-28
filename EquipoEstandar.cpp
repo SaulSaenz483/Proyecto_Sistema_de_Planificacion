@@ -17,13 +17,3 @@ void EquipoEstandar::degradar()
     }
 
 }
-
-void EquipoEstandar::aplicarMantenimiento()  {
-    cout <<" Realizando mantenimiento al equipo estandar: " << getID() << endl;
-
-    estado = 100.0;
-
-    resetTiempoInactivo();
-
-
-}
