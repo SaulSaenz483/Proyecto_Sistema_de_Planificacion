@@ -30,7 +30,8 @@ void Equipo::agregarIncidencia(Incidencia* inc)
     if (inc == nullptr) {
         throw OperacionInconsistenteException("No se puede agregar una incidencia nula al equipo " + id);
     }
-    incidencias.push_back(inc);}
+    incidencias.push_back(inc);
+}
 
 int Equipo::getCantidadIncidencias()const
 {

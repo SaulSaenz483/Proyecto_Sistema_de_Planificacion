@@ -8,8 +8,6 @@
 
 #include<vector>
 #include<string>
-#include <fstream>
-#include <sstream> //Para el manejo de la lectura con ;
 #include"Equipo.h"
 #include "Incidencia.h"
 #include <random>
@@ -20,7 +18,7 @@ private:
     vector<Equipo*> inventario;
     vector<Incidencia*> historialIncidencias;
     int diaActual;
-    ofstream archivoReporte;
+    // Cada dia genera su propio archivo de reporte (no hay stream persistente)
 
     // Limite de las incidencias
     static const int MAX_INCIDENCIAS = 300;

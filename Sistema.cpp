@@ -3,6 +3,7 @@
 //
 
 #include "Sistema.h"
+#include <fstream>
 #include "EquipoCritico.h" //Para poder crear los objetos
 #include "EquipoEstandar.h"
 #include "Excepciones.h"
@@ -24,9 +25,6 @@ Sistema::~Sistema() {
         delete inc;
     }
     // Cerrar archivo en caso de estar abierto
-    if (archivoReporte.is_open()) {
-        archivoReporte.close();
-    }
 }
 
 // Fabricas
@@ -424,16 +422,24 @@ void Sistema::cargarDatosIniciales(const string& rutaArchivo) //Con busqueda bin
             Equipo* destino = busquedaBinariaEquipo(idEquipo);
 
             if (destino != nullptr) {
-                inc->asignarEquipo(destino); // Lo vinculamos
+                try {
+                    inc->asignarEquipo(destino);
+                } catch (...) {
+                    delete inc; // Evitar leak si asignarEquipo lanza excepcion
+                    throw;
+                }
             } else {
                 cerr << "  [ADVERTENCIA] Equipo '" << idEquipo
-                     << "' no encontrado para la incidencia. Guardada sin equipo.\n";
+                     << "' no encontrado. Incidencia guardada sin equipo.\n";
             }
 
             historialIncidencias.push_back(inc);
 
         } catch (const SistemaException& e) {
+            // Si algo fallo despues del new, liberamos la memoria para evitar leak
             cerr << "  [ADVERTENCIA] Error procesando incidencia: " << e.what() << "\n";
+        } catch (...) {
+            cerr << "  [ADVERTENCIA] Error inesperado procesando incidencia.\n";
         }
     }
 
@@ -483,16 +489,11 @@ void Sistema::ejecutarSimulacion()
     if (inventario.empty())
         throw OperacionInconsistenteException("El inventario esta vacio. Cargue datos antes de simular.");
 
-    archivoReporte.open("reporte_simulacion.txt");
-    if (!archivoReporte.is_open())
-        throw ArchivoInvalidoException("No se pudo crear reporte_simulacion.txt");
 
-    archivoReporte << "====================================================\n";
-    archivoReporte << "  REPORTE DE SIMULACION - SISTEMA DE MANTENIMIENTO\n";
-    archivoReporte << "====================================================\n";
-    archivoReporte << "Equipos    : " << inventario.size()           << "\n";
-    archivoReporte << "Incidencias: " << historialIncidencias.size() << "\n";
-    archivoReporte << "====================================================\n\n";
+
+
+
+
 
     cout << "\n===================================================\n";
     cout << "  INICIANDO SIMULACION DE 30 DIAS\n";
@@ -503,36 +504,29 @@ void Sistema::ejecutarSimulacion()
     while (diaActual <= 30)
         procesarDia();
 
-    // Resumen final
-    archivoReporte << "\n====================================================\n";
-    archivoReporte << "  FIN DE LA SIMULACION\n";
-    archivoReporte << "  Riesgo global final : " << calcularRiesgoGlobal()    << "\n";
-    archivoReporte << "  Backlog final       : " << calcularBacklogPendiente() << "\n";
-    archivoReporte << "====================================================\n";
-    archivoReporte.close();
 
     cout << "\n===================================================\n";
     cout << "  SIMULACION COMPLETADA\n";
     cout << "  Riesgo global final : " << calcularRiesgoGlobal()    << "\n";
     cout << "  Backlog pendiente   : " << calcularBacklogPendiente() << "\n";
-    cout << "  Reporte en         : reporte_simulacion.txt\n";
+    cout << "  Reportes en        : reporte_dia_01.txt ... reporte_dia_30.txt\n";
     cout << "===================================================\n";
 }
 
 
-// generarReporteDiario
+// generarReporteDiario — genera un archivo .txt independiente por dia (RF9 + RF10)
 
 
 void Sistema::generarReporteDiario(const vector<Equipo*>& atendidos)
 {
     double riesgo = calcularRiesgoGlobal();
+    int    backlog = calcularBacklogPendiente();
+
     string nivelRiesgo;
     if      (riesgo >= 50) nivelRiesgo = "CRITICO";
     else if (riesgo >= 25) nivelRiesgo = "ALTO";
     else if (riesgo >= 10) nivelRiesgo = "MEDIO";
     else                   nivelRiesgo = "BAJO";
-
-    int backlog = calcularBacklogPendiente();
 
     // --- Consola: formato exacto del enunciado ---
     cout << "Top prioridad : ";
@@ -541,47 +535,65 @@ void Sistema::generarReporteDiario(const vector<Equipo*>& atendidos)
              << " (" << atendidos[i]->calcularPrioridad() << ")";
         if (i < (int)atendidos.size() - 1) cout << " , ";
     }
-    cout << "\n";
-    cout << "Asignados : ";
+    cout << "\nAsignados : ";
     for (int i = 0; i < (int)atendidos.size(); i++) {
         cout << atendidos[i]->getID();
         if (i < (int)atendidos.size() - 1) cout << " , ";
     }
-    cout << "\n";
-    cout << "Backlog pendiente : " << backlog << "\n";
-    cout << "Riesgo global : "     << nivelRiesgo << "\n";
+    cout << "\nBacklog pendiente : " << backlog
+         << "\nRiesgo global : " << nivelRiesgo << "\n";
 
-    // --- Archivo: mismo formato del enunciado + detalle extra para trazabilidad ---
-    if (!archivoReporte.is_open()) return;
+    // --- Archivo individual por dia (RF10) ---
+    // Nombre: reporte_dia_01.txt ... reporte_dia_30.txt
+    string nombreArchivo = "reporte_dia_";
+    if (diaActual < 10) nombreArchivo += "0";
+    nombreArchivo += to_string(diaActual) + ".txt";
 
-    archivoReporte << "\nDia " << diaActual << "\n";
-    archivoReporte << "Top prioridad : ";
-    for (int i = 0; i < (int)atendidos.size(); i++) {
-        archivoReporte << atendidos[i]->getID()
-                       << " (" << atendidos[i]->calcularPrioridad() << ")";
-        if (i < (int)atendidos.size() - 1) archivoReporte << " , ";
+    ofstream archivo(nombreArchivo);
+    if (!archivo.is_open()) {
+        cerr << "  [ADVERTENCIA] No se pudo crear " << nombreArchivo << "\n";
+        return;
     }
-    archivoReporte << "\n";
-    archivoReporte << "Asignados : ";
-    for (int i = 0; i < (int)atendidos.size(); i++) {
-        archivoReporte << atendidos[i]->getID();
-        if (i < (int)atendidos.size() - 1) archivoReporte << " , ";
-    }
-    archivoReporte << "\n";
-    archivoReporte << "Backlog pendiente : " << backlog     << "\n";
-    archivoReporte << "Riesgo global : "     << nivelRiesgo << "\n";
 
-    // Detalle adicional de equipos pendientes (trazabilidad RF9)
-    archivoReporte << "Equipos pendientes de atencion:\n";
+    archivo << "====================================================\n";
+    archivo << "  REPORTE DIA " << diaActual << "\n";
+    archivo << "====================================================\n";
+    archivo << "Dia " << diaActual << "\n";
+    archivo << "Top prioridad : ";
+    for (int i = 0; i < (int)atendidos.size(); i++) {
+        archivo << atendidos[i]->getID()
+                << " (" << atendidos[i]->calcularPrioridad() << ")";
+        if (i < (int)atendidos.size() - 1) archivo << " , ";
+    }
+    archivo << "\nAsignados : ";
+    for (int i = 0; i < (int)atendidos.size(); i++) {
+        archivo << atendidos[i]->getID();
+        if (i < (int)atendidos.size() - 1) archivo << " , ";
+    }
+    archivo << "\nBacklog pendiente : " << backlog
+            << "\nRiesgo global : " << nivelRiesgo << "\n";
+
+    archivo << "\n--- Detalle equipos atendidos ---\n";
+    for (Equipo* eq : atendidos) {
+        archivo << "  " << eq->getID()
+                << " | prioridad=" << eq->calcularPrioridad()
+                << " | estado="    << eq->getEstado()
+                << " | incidencias=" << eq->getCantidadIncidencias() << "\n";
+    }
+
+    archivo << "\n--- Equipos pendientes con incidencias ---\n";
     for (Equipo* eq : inventario) {
         bool atendido = false;
         for (Equipo* at : atendidos)
             if (at->getID() == eq->getID()) { atendido = true; break; }
         if (!atendido && eq->getCantidadIncidencias() > 0) {
-            archivoReporte << "  " << eq->getID()
-                           << " (prioridad=" << eq->calcularPrioridad()
-                           << ", incidencias=" << eq->getCantidadIncidencias() << ")\n";
+            archivo << "  " << eq->getID()
+                    << " | prioridad=" << eq->calcularPrioridad()
+                    << " | estado="    << eq->getEstado()
+                    << " | incidencias=" << eq->getCantidadIncidencias() << "\n";
         }
     }
-    archivoReporte << "\n";
+
+    archivo << "====================================================\n";
+    archivo.close();
 }
