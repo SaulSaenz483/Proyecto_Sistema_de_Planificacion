@@ -16,7 +16,7 @@ class Incidencia;
 class Equipo {
 
 protected:
-    string id;
+    const string id;
     int criticidad;
     double estado;
     int tiempoInactivo;
@@ -26,8 +26,8 @@ protected:
 
 public:
 
-    Equipo(string id, int criticidad, double estado);
-    virtual ~Equipo();
+    Equipo(const string& id, int criticidad, double estado);
+    virtual ~Equipo() = default;
 
     // Gestion de incidencias
     void agregarIncidencia(Incidencia* inc);

@@ -6,7 +6,7 @@
 #include "Incidencia.h"
 #include "Excepciones.h"
 
-Equipo::Equipo(string id, int criticidad, double estado) : id(id), criticidad(criticidad), estado(estado), tiempoInactivo(0),estrategiaActual(nullptr)
+Equipo::Equipo(const string& id, int criticidad, double estado) : id(id), criticidad(criticidad), estado(estado), tiempoInactivo(0),estrategiaActual(nullptr)
 {
     if (id.empty()) {
         throw FormatoInvalidoException("El ID del equipo no puede estar vacio.");
@@ -19,11 +19,7 @@ Equipo::Equipo(string id, int criticidad, double estado) : id(id), criticidad(cr
     }
 }
 
-Equipo::~Equipo()
-{
-    // El equipo no es dueño de las incidencias (solo las referencia),
-    // asi que no las eliminamos aqui. El sistema las maneja por separado.
-}
+
 
 void Equipo::agregarIncidencia(Incidencia* inc)
 {

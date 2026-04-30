@@ -10,7 +10,7 @@
 class EquipoCritico: public Equipo {
 
 public:
-    EquipoCritico(string id, int criticidad, double estado): Equipo(id,criticidad,estado){}
+    EquipoCritico(const string& id, int criticidad, double estado): Equipo(id,criticidad,estado){}
 
     void degradar() override;
 

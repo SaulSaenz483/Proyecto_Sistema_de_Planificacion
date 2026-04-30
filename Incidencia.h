@@ -26,7 +26,7 @@ private:
     bool activa = false;
 
 public:
-    Incidencia(TipoIncidencia tipo, string descripcion, int diaRegistro);
+    Incidencia(TipoIncidencia tipo, const string& descripcion, int diaRegistro);
 
     // Retorna el tipo enum
     TipoIncidencia getTipo() const;

@@ -6,7 +6,7 @@
 #include "Equipo.h"
 #include "Excepciones.h"
 
-Incidencia::Incidencia(TipoIncidencia tipo, string descripcion, int diaRegistro) : tipo(tipo),
+Incidencia::Incidencia(TipoIncidencia tipo, const string& descripcion, int diaRegistro) : tipo(tipo),
 descripcion(descripcion),diaRegistro(diaRegistro), equipoAsociado(nullptr)
 {
     if (descripcion.empty())

@@ -17,7 +17,7 @@ protected:
     string mensaje;
 
 public:
-    explicit SistemaException(const string &mensaje) : mensaje(mensaje) {}
+    explicit SistemaException(const string& mensaje) : mensaje(mensaje) {}
 
     const char* what() const noexcept override { return mensaje.c_str(); }
 };

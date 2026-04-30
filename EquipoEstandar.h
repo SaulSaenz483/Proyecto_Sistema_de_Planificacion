@@ -11,7 +11,7 @@ class EquipoEstandar:public Equipo {
 
 public:
 
-    EquipoEstandar(string id, int criticidad, double estado):Equipo(id,criticidad,estado){}
+    EquipoEstandar(const string& id, int criticidad, double estado):Equipo(id,criticidad,estado){}
 
     void degradar() override;
 

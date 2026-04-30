@@ -4,66 +4,55 @@
 
 #include "Sistema.h"
 #include <fstream>
-#include "EquipoCritico.h" //Para poder crear los objetos
+#include "EquipoCritico.h"
 #include "EquipoEstandar.h"
 #include "Excepciones.h"
 #include "Estrategias.h"
-#include<sstream> //Para cortar los strings
+#include <sstream>
 #include <iostream>
 
 using namespace std;
 
-Sistema::Sistema(): diaActual(1), rng(random_device{}()){}
+// ================================================================
+// Constructor / Destructor
+// ================================================================
 
-Sistema::~Sistema() {
-    // Liberar Equipos
-    for (Equipo* eq : inventario) {
-        delete eq;
-    }
-    // Liberar Incidencias
-    for (Incidencia* inc : historialIncidencias) {
-        delete inc;
-    }
-    // Cerrar archivo en caso de estar abierto
+Sistema::Sistema() : diaActual(1), rng(random_device{}()) {}
+
+Sistema::~Sistema()
+{
+    for (Equipo*    eq  : inventario)          delete eq;
+    for (Incidencia* inc : historialIncidencias) delete inc;
 }
 
-// Fabricas
+// ================================================================
+// Fabricas (static — no usan atributos de la clase)
+// ================================================================
 
 Equipo* Sistema::fabricarEquipo(const string& linea)
 {
     stringstream ss(linea);
     string id, tokenCriticidad, tokenEstado;
 
-    getline(ss,id,';'); // Lee hasta que encuentra ; y guarda lo que leyo en una variable
-    getline(ss,tokenCriticidad,';');
-    getline(ss,tokenEstado,';');
+    getline(ss, id,              ';');
+    getline(ss, tokenCriticidad, ';');
+    getline(ss, tokenEstado,     ';');
 
-    //Creamos variables limpias para guardar los datos
+    int    criticidad = 0;
+    double estado     = 0.0;
 
-    int criticidad =0;
-    double estado = 0.0;
-
-    size_t posCriticidad = tokenCriticidad.find('='); // Limpiar "criticidad=9" para sacar solo el '9'
-    if (posCriticidad != string::npos) //Si encuentra el signo '='
-    {
-        criticidad = stoi(tokenCriticidad.substr(posCriticidad + 1)); //Da el pedazo de texto que esta despues del igual
-    }
+    size_t posCriticidad = tokenCriticidad.find('=');
+    if (posCriticidad != string::npos)
+        criticidad = stoi(tokenCriticidad.substr(posCriticidad + 1));
 
     size_t posEstado = tokenEstado.find('=');
     if (posEstado != string::npos)
-    {
         estado = stod(tokenEstado.substr(posEstado + 1));
-    }
 
-    //La decision de crear equipo basado en su criticidad
-    if (criticidad >=8)
-    {
-        return new EquipoCritico(id,criticidad,estado);
-    } else
-    {
-        return new EquipoEstandar(id,criticidad,estado);
-    }
-
+    if (criticidad >= 8)
+        return new EquipoCritico(id, criticidad, estado);
+    else
+        return new EquipoEstandar(id, criticidad, estado);
 }
 
 Incidencia* Sistema::fabricarIncidencia(const string& linea, string& idEquipoOut)
@@ -71,455 +60,344 @@ Incidencia* Sistema::fabricarIncidencia(const string& linea, string& idEquipoOut
     stringstream ss(linea);
     string prefijo, tokenSeveridad, tokenDia;
 
-    // Ejemplo: INC;EQ-001;severidad=ALTA;dia=3
+    // Formato: INC;EQ-001;severidad=ALTA;dia=3
+    getline(ss, prefijo,        ';');
+    getline(ss, idEquipoOut,    ';');
+    getline(ss, tokenSeveridad, ';');
+    getline(ss, tokenDia,       ';');
 
-    getline(ss, prefijo,';');
-    getline(ss, idEquipoOut,';');
-    getline(ss, tokenSeveridad,';');
-    getline(ss, tokenDia,';');
-
-    string severidadStr = ""; //Extraemos el valor de la severidad despues del '='
+    string severidadStr;
     size_t posSeveridad = tokenSeveridad.find('=');
+    if (posSeveridad != string::npos)
+        severidadStr = tokenSeveridad.substr(posSeveridad + 1);
 
-    if (posSeveridad!=string::npos)
-    {
-        severidadStr = tokenSeveridad.substr(posSeveridad+1);
-    }
+    TipoIncidencia tipo = TipoIncidencia::LEVE;
+    if      (severidadStr == "ALTA"  || severidadStr == "GRAVE") tipo = TipoIncidencia::GRAVE;
+    else if (severidadStr == "MEDIA")                            tipo = TipoIncidencia::MEDIA;
+    else if (severidadStr == "BAJA"  || severidadStr == "LEVE")  tipo = TipoIncidencia::LEVE;
 
-    // Traducir el texto al ENUM
-
-    TipoIncidencia tipo = TipoIncidencia::LEVE; //Valor por defecto
-
-    if (severidadStr == "ALTA" || severidadStr == "GRAVE") {
-        tipo = TipoIncidencia::GRAVE;
-
-    } else if (severidadStr == "MEDIA") {
-        tipo = TipoIncidencia::MEDIA;
-
-    } else if (severidadStr == "BAJA"||severidadStr == "LEVE" ) {
-        tipo = TipoIncidencia::LEVE;
-    }
-
-    //Extraer el valor del dia
-
-    int dia = 1; //Creamos una variable limpia
+    int    dia    = 1;
     size_t posDia = tokenDia.find('=');
-
-    if (posDia!= string::npos) //Busca hasta '='
-    {
-        dia = stoi(tokenDia.substr(posDia+1)); //Extrae lo que hay despues del '=' y convierte dia a entero
-    }
-
-    //Creamos una descripcion, ya que el txt que nos daban no traia descripcion
+    if (posDia != string::npos)
+        dia = stoi(tokenDia.substr(posDia + 1));
 
     string descripcion = "Incidencia reportada para el equipo " + idEquipoOut;
-
-    //Fabricamos la incidencia
-
-    Incidencia* nuevaInc = new Incidencia(tipo,descripcion,dia);
-
-    return nuevaInc;
-
+    return new Incidencia(tipo, descripcion, dia);
 }
 
-// Algoritmo
+// ================================================================
+// Algoritmos propios
+// ================================================================
 
 int Sistema::particionEquipos(int low, int high)
 {
-    //Tomar prioridad del ultimo equipo como pivote
     double pivotPrioridad = inventario[high]->calcularPrioridad();
+    int i = low - 1;
 
-    //Indice del elemento mas grande
-
-    int i = (low -1);
-
-    for (int j = low; j <= high-1; j++)
-    {
-        if (inventario[j]->calcularPrioridad() >= pivotPrioridad) //Vamos de forma descendente
-        {
-            i++; //Avanzar el indice
-
-            //Hacemos un intercambio de punteros en el vector
-
-            Equipo* temp = inventario[i];
+    for (int j = low; j <= high - 1; j++) {
+        if (inventario[j]->calcularPrioridad() >= pivotPrioridad) {
+            i++;
+            Equipo* temp  = inventario[i];
             inventario[i] = inventario[j];
             inventario[j] = temp;
-
         }
     }
 
-    //Colocamos el pivote en su lugar
+    Equipo* temp      = inventario[i + 1];
+    inventario[i + 1] = inventario[high];
+    inventario[high]  = temp;
 
-    Equipo* temp = inventario[i+1];
-    inventario[i+1] = inventario[high];
-    inventario[high] = temp;
-
-    return (i+1); //Retornamos la posicion final del pivote
-
+    return i + 1;
 }
 
 void Sistema::quickSortEquipos(int low, int high)
 {
-
-    if (low < high)
-    {
-
-        // pi es el índice donde quedó el pivote, en este caso ya estaria en su posicion final
-
+    if (low < high) {
         int pi = particionEquipos(low, high);
-
-        //Ordenamos recursivamente la mitad izquierda
-        quickSortEquipos(low, pi-1);
-
-        //Ordenamos recursivamente la mitad derecha
-        quickSortEquipos(pi+1, high);
-
+        quickSortEquipos(low,    pi - 1);
+        quickSortEquipos(pi + 1, high);
     }
-
 }
 
-Equipo* Sistema::busquedaBinariaEquipo(const string& idBusqueda)
+Equipo* Sistema::busquedaBinariaEquipo(const string& idBusqueda) const
 {
     int izquierda = 0;
-    int derecha = inventario.size() - 1;
+    int derecha   = static_cast<int>(inventario.size()) - 1;
 
-    while (izquierda<= derecha)
-    {
-        int medio = izquierda + (derecha - izquierda)/2;
+    while (izquierda <= derecha) {
+        int    medio    = izquierda + (derecha - izquierda) / 2;
         string idActual = inventario[medio]->getID();
 
-        if (idActual == idBusqueda)
-        {
-            return inventario[medio];
-        }
-
-        if (idActual < idBusqueda)
-        {
-            izquierda = medio + 1; //Si idActual es mayor alfanumericamente, ignora la izquierda)
-        } else {
-            derecha = medio - 1; //Si es menor, ignora la derecha
-        }
-
+        if (idActual == idBusqueda) return inventario[medio];
+        if (idActual <  idBusqueda) izquierda = medio + 1;
+        else                        derecha   = medio - 1;
     }
-    return nullptr; //Regresa nulo si el equipo no existe
+    return nullptr;
 }
 
+// ================================================================
 // Calculos globales
+// ================================================================
 
 double Sistema::calcularRiesgoGlobal() const
 {
-    double riesgoTotal = 0.0;
-
-    //Recorremos el historial completo de incidencias
-
-    for (Equipo* eq :inventario)
-    {
-        riesgoTotal+= eq->getPesoTotalIncidencias();
-    }
-    return riesgoTotal;
+    double total = 0.0;
+    for (Equipo* eq : inventario)
+        total += eq->getPesoTotalIncidencias();
+    return total;
 }
 
-
-int Sistema::calcularBacklogPendiente() const {
-    int totalIncidencias = 0;
-
-    for (Equipo* eq: inventario)
-    {
-        totalIncidencias += eq->getCantidadIncidencias();
-    }
-
-    return totalIncidencias;
-
+// El backlog es un numero variable — sistema aleatorio, no puede ser fijo.
+// Cuenta cuantos equipos tienen al menos una incidencia activa.
+int Sistema::calcularBacklogPendiente() const
+{
+    int count = 0;
+    for (Equipo* eq : inventario)
+        if (eq->getCantidadIncidencias() > 0) count++;
+    return count;
 }
 
-void Sistema::degradarTodos()
+// ================================================================
+// Pasos internos de cada dia
+// ================================================================
+
+void Sistema::degradarTodos() const
 {
     for (Equipo* eq : inventario)
         eq->degradar();
 }
 
-// Recorre el historial y activa en cada equipo solo las incidencias
-// cuyo diaRegistro coincide con el dia actual de la simulacion.
-void Sistema::activarIncidenciasDia()
+void Sistema::activarIncidenciasDia() const
 {
     for (Incidencia* inc : historialIncidencias) {
         if (inc->getDiaRegistro() == diaActual && !inc->estaActiva()) {
             Equipo* destino = inc->getEquipo();
             if (destino != nullptr) {
-                inc->activar();              // marcar para no agregar dos veces
+                inc->activar();
                 destino->agregarIncidencia(inc);
             }
         }
     }
 }
 
-void Sistema::seleccionarYMantener(vector<Equipo*>& atendidos)
-{
-    int limite = min(3, (int)inventario.size());
-    for (int i = 0; i < limite; i++) {
-        atendidos.push_back(inventario[i]);
-    }
-
-    MantenimientoPreventivo prev;
-    MantenimientoCorrectivo corr;
-    MantenimientoEmergencia emer;
-
-
-
-    for (Equipo* eq : atendidos) {
-        // Decidimos la estrategia según el estado del equipo
-        if (eq->getEstado() < 30.0 || eq->getCantidadIncidencias() > 5) {
-            eq->setEstrategia(&emer); // Está en las últimas
-        }
-        else if (eq->getEstado() < 60.0) {
-            eq->setEstrategia(&corr);  // Está a medias
-        }
-        else {
-            eq->setEstrategia(&prev);  // Solo un cariñito
-        }
-
-        // El equipo se repara según la estrategia que le acabamos de inyectar
-        eq->aplicarMantenimiento();
-
-        // --- REQUISITO OBLIGATORIO DEL PDF: dynamic_cast ---
-        EquipoCritico* eqCritico = dynamic_cast<EquipoCritico*>(eq);
-        if (eqCritico != nullptr) {
-            eqCritico->calibrarMotor();
-        }
-    }
-}
-
-void Sistema::actualizarTiemposInactivos(const vector<Equipo*>& atendidos)
-{
-    for (Equipo* eq : inventario) {
-        bool fueAtendido = false;
-        for (Equipo* at : atendidos) {
-            if (at->getID() == eq->getID()) {
-                fueAtendido = true;
-                break;
-            }
-        }
-        if (!fueAtendido) eq->aumentarTiempoInactivo();
-    }
-}
-
 void Sistema::generarIncidenciasAleatorias()
 {
-    // Cuantas incidencias ya existen en el historial
-    int totalActual = (int)historialIncidencias.size();
-    if (totalActual >= MAX_INCIDENCIAS) return; // tope alcanzado
+    int totalActual = static_cast<int>(historialIncidencias.size());
+    if (totalActual >= MAX_INCIDENCIAS) return;
 
-    // Cuantas generar hoy (entre 8 y 12, sin pasarse del tope)
-    uniform_int_distribution<int> distCantidad(8, 12);
-    int cuantasHoy = distCantidad(rng);
-    cuantasHoy = min(cuantasHoy, MAX_INCIDENCIAS - totalActual);
+    // Distribuir uniformemente para llegar a exactamente 300 al dia 30
+    int diasRestantes = 31 - diaActual;
+    int faltantes     = MAX_INCIDENCIAS - totalActual;
+    int cuantasHoy    = faltantes / diasRestantes;
+    if (cuantasHoy < 1) cuantasHoy = 1;
 
-    // Distribuciones para elegir equipo y severidad al azar
-    uniform_int_distribution<int> distEquipo(0, (int)inventario.size() - 1);
-    uniform_int_distribution<int> distTipo(0, 2); // 0=LEVE, 1=MEDIA, 2=GRAVE
+    uniform_int_distribution<int> distEquipo(0, static_cast<int>(inventario.size()) - 1);
+    uniform_int_distribution<int> distTipo(0, 2);
 
-    // Tabla de tipos para construir la descripcion
     TipoIncidencia tipos[3] = {
         TipoIncidencia::LEVE,
         TipoIncidencia::MEDIA,
         TipoIncidencia::GRAVE
     };
-    string nombresTipo[3] = { "LEVE", "MEDIA", "GRAVE" };
 
-    int generadas = 0;
     for (int i = 0; i < cuantasHoy; i++) {
-        Equipo*        equipoDestino = inventario[distEquipo(rng)];
-        TipoIncidencia tipoElegido   = tipos[distTipo(rng)];
-        string         desc = "Incidencia " + nombresTipo[(int)tipoElegido]
-                            + " generada dia " + to_string(diaActual)
-                            + " en " + equipoDestino->getID();
+        Equipo*        destino    = inventario[distEquipo(rng)];
+        int            tipoIdx    = distTipo(rng);
+        TipoIncidencia tipo       = tipos[tipoIdx];
+        const string   tipoNombre[3] = { "LEVE", "MEDIA", "GRAVE" };
+        string desc = "Incidencia " + tipoNombre[tipoIdx]
+                    + " generada dia " + to_string(diaActual)
+                    + " en " + destino->getID();
 
-        // Creamos la incidencia con diaRegistro = diaActual
-        Incidencia* nueva = new Incidencia(tipoElegido, desc, diaActual);
-        nueva->asignarEquipo(equipoDestino);
-
-        // La activamos inmediatamente en el equipo
+        auto* nueva = new Incidencia(tipo, desc, diaActual);
+        nueva->asignarEquipo(destino);
         nueva->activar();
-        equipoDestino->agregarIncidencia(nueva);
-
-        // La guardamos en el historial (Sistema es el dueno de la memoria)
+        destino->agregarIncidencia(nueva);
         historialIncidencias.push_back(nueva);
-        generadas++;
     }
 
-    cout << "  [Incidencias generadas hoy: " << generadas
+    cout << "  [Incidencias generadas hoy: " << cuantasHoy
          << " | Total historial: " << historialIncidencias.size() << "]\n";
 }
 
-// Activa en cada equipo las incidencias del archivo que corresponden a hoy.
-// Las incidencias aleatorias ya se activan directamente en generarIncidenciasAleatorias.
+void Sistema::seleccionarYMantener(vector<Equipo*>& atendidos) const
+{
+    int limite = min(3, static_cast<int>(inventario.size()));
+    for (int i = 0; i < limite; i++)
+        atendidos.push_back(inventario[i]);
 
+    MantenimientoPreventivo prev;
+    MantenimientoCorrectivo corr;
+    MantenimientoEmergencia emer;
 
+    for (Equipo* eq : atendidos) {
+        if (eq->getEstado() < 30.0 || eq->getCantidadIncidencias() > 5)
+            eq->setEstrategia(&emer);
+        else if (eq->getEstado() < 60.0)
+            eq->setEstrategia(&corr);
+        else
+            eq->setEstrategia(&prev);
 
-// cargarDatosIniciales
+        eq->aplicarMantenimiento();
+
+        // Downcasting seguro — requisito obligatorio del enunciado
+        auto* eqCritico = dynamic_cast<EquipoCritico*>(eq);
+        if (eqCritico != nullptr)
+            eqCritico->calibrarMotor();
+    }
+}
+
+void Sistema::actualizarTiemposInactivos(const vector<Equipo*>& atendidos) const
+{
+    for (Equipo* eq : inventario) {
+        bool fueAtendido = false;
+        for (Equipo* at : atendidos)
+            if (at->getID() == eq->getID()) { fueAtendido = true; break; }
+        if (!fueAtendido) eq->aumentarTiempoInactivo();
+    }
+}
 
 // ================================================================
-// RF1 — cargarDatosIniciales (Con Búsqueda Optimizada - Binaria)
+// RF1 — cargarDatosIniciales
 // ================================================================
 
-void Sistema::cargarDatosIniciales(const string& rutaArchivo) //Con busqueda binaria
+void Sistema::cargarDatosIniciales(const string& rutaArchivo)
 {
     ifstream archivo(rutaArchivo);
     if (!archivo.is_open())
         throw ArchivoInvalidoException("No se pudo abrir: " + rutaArchivo);
 
     string linea;
-    int numLinea = 0;
-
-    // Vector temporal para guardar los textos de las incidencias y procesarlas al final
+    int    numLinea = 0;
     vector<string> lineasIncidencias;
 
-    // --- PASO 1: Leer archivo y extraer solo los equipos ---
+    // Paso 1: leer equipos
     while (getline(archivo, linea)) {
         numLinea++;
-
-        // Limpiar \r en caso de archivos con saltos de linea Windows
         if (!linea.empty() && linea.back() == '\r') linea.pop_back();
         if (linea.empty() || linea[0] == '#') continue;
 
+        Equipo* eq = nullptr;
         try {
             if (linea.find("INC") == 0) {
-                // Si es incidencia, la guardamos temporalmente como texto
                 lineasIncidencias.push_back(linea);
             } else {
-                // Si es un equipo, lo fabricamos y lo metemos al inventario
-                Equipo* eq = fabricarEquipo(linea);
+                eq = fabricarEquipo(linea);
                 inventario.push_back(eq);
             }
         } catch (const SistemaException& e) {
+            delete eq;
             cerr << "  [ADVERTENCIA] Linea " << numLinea
                  << " ignorada: " << e.what() << "\n";
         }
     }
     archivo.close();
 
-    // --- PASO 2: Ordenar el inventario alfabéticamente por ID
-    // Implementamos un Bubble Sort rápido
-    int n = inventario.size();
-    for (int i = 0; i < n - 1; i++) {
-        for (int j = 0; j < n - i - 1; j++) {
+    // Paso 2: ordenar inventario por ID (necesario para busqueda binaria)
+    int n = static_cast<int>(inventario.size());
+    for (int i = 0; i < n - 1; i++)
+        for (int j = 0; j < n - i - 1; j++)
             if (inventario[j]->getID() > inventario[j + 1]->getID()) {
-                // Intercambio de punteros si el ID de la izquierda es "mayor" que el de la derecha
-                Equipo* temp = inventario[j];
-                inventario[j] = inventario[j + 1];
-                inventario[j + 1] = temp;
+                Equipo* temp    = inventario[j];
+                inventario[j]   = inventario[j + 1];
+                inventario[j+1] = temp;
             }
-        }
-    }
 
-    // --- PASO 3: Procesar las incidencias usando Búsqueda Binaria ---
+    // Paso 3: vincular incidencias usando busqueda binaria
     for (const string& lineaInc : lineasIncidencias) {
+        Incidencia* inc = nullptr;
         try {
             string idEquipo;
-            Incidencia* inc = fabricarIncidencia(lineaInc, idEquipo);
+            inc = fabricarIncidencia(lineaInc, idEquipo);
 
-            //  Usamos la búsqueda optimizada
             Equipo* destino = busquedaBinariaEquipo(idEquipo);
-
             if (destino != nullptr) {
-                try {
-                    inc->asignarEquipo(destino);
-                } catch (...) {
-                    delete inc; // Evitar leak si asignarEquipo lanza excepcion
-                    throw;
-                }
+                inc->asignarEquipo(destino);
             } else {
                 cerr << "  [ADVERTENCIA] Equipo '" << idEquipo
-                     << "' no encontrado. Incidencia guardada sin equipo.\n";
+                     << "' no encontrado. Incidencia ignorada.\n";
+                delete inc;
+                continue;
             }
-
             historialIncidencias.push_back(inc);
 
         } catch (const SistemaException& e) {
-            // Si algo fallo despues del new, liberamos la memoria para evitar leak
+            delete inc;
             cerr << "  [ADVERTENCIA] Error procesando incidencia: " << e.what() << "\n";
         } catch (...) {
+            delete inc;
             cerr << "  [ADVERTENCIA] Error inesperado procesando incidencia.\n";
         }
     }
 
     cout << "  Carga completa y optimizada: "
-         << inventario.size() << " equipos ordenados por ID, "
+         << inventario.size()           << " equipos ordenados por ID, "
          << historialIncidencias.size() << " incidencias vinculadas.\n";
 }
 
-
-// procesarDia - un ciclo completo
-
+// ================================================================
+// procesarDia — un ciclo completo (RF3 a RF8)
+// ================================================================
 
 void Sistema::procesarDia()
 {
     cout << "\n--- Dia " << diaActual << " ---\n";
 
-    // RF3: todos los equipos se degradan
     degradarTodos();
-
-    // RF2 (paso 2): aparecen las incidencias programadas para hoy
     activarIncidenciasDia();
-
-    // Generar incidencias aleatorias del dia (hasta el tope de 300)
     generarIncidenciasAleatorias();
+    quickSortEquipos(0, static_cast<int>(inventario.size()) - 1);
 
-    // RF4 + RF5: calcular prioridad y ordenar de mayor a menor
-    quickSortEquipos(0, (int)inventario.size() - 1);
-
-    // RF6 + RF7: seleccionar top 3 y aplicar mantenimiento
     vector<Equipo*> atendidos;
     seleccionarYMantener(atendidos);
-
-    // RF8: actualizar tiempos inactivos del resto
     actualizarTiemposInactivos(atendidos);
-
-    // RF9 + RF10: reporte del dia
     generarReporteDiario(atendidos);
 
     diaActual++;
 }
 
-// ejecutarSimulacion - 30 dias
-
+// ================================================================
+// ejecutarSimulacion — RF2: exactamente 30 dias
+// ================================================================
 
 void Sistema::ejecutarSimulacion()
 {
     if (inventario.empty())
-        throw OperacionInconsistenteException("El inventario esta vacio. Cargue datos antes de simular.");
-
-
-
-
-
-
+        throw OperacionInconsistenteException(
+            "El inventario esta vacio. Cargue datos antes de simular.");
 
     cout << "\n===================================================\n";
     cout << "  INICIANDO SIMULACION DE 30 DIAS\n";
-    cout << "  Equipos: "    << inventario.size()
+    cout << "  Equipos: "     << inventario.size()
          << " | Incidencias: " << historialIncidencias.size() << "\n";
     cout << "===================================================\n";
 
     while (diaActual <= 30)
         procesarDia();
 
+    double riesgo  = calcularRiesgoGlobal();
+
+    string nivelRiesgo;
+    if      (riesgo >= 50) nivelRiesgo = "CRITICO";
+    else if (riesgo >= 25) nivelRiesgo = "ALTO";
+    else if (riesgo >= 10) nivelRiesgo = "MEDIO";
+    else                   nivelRiesgo = "BAJO";
 
     cout << "\n===================================================\n";
     cout << "  SIMULACION COMPLETADA\n";
-    cout << "  Riesgo global final : " << calcularRiesgoGlobal()    << "\n";
+    cout << "  Riesgo global final : " << nivelRiesgo    << "\n";
     cout << "  Backlog pendiente   : " << calcularBacklogPendiente() << "\n";
     cout << "  Reportes en        : reporte_dia_01.txt ... reporte_dia_30.txt\n";
     cout << "===================================================\n";
 }
 
+// ================================================================
+// generarReporteDiario — RF9 + RF10: archivo independiente por dia
+// ================================================================
 
-// generarReporteDiario — genera un archivo .txt independiente por dia (RF9 + RF10)
-
-
-void Sistema::generarReporteDiario(const vector<Equipo*>& atendidos)
+void Sistema::generarReporteDiario(const vector<Equipo*>& atendidos) const
 {
-    double riesgo = calcularRiesgoGlobal();
+    double riesgo  = calcularRiesgoGlobal();
     int    backlog = calcularBacklogPendiente();
 
     string nivelRiesgo;
@@ -528,23 +406,22 @@ void Sistema::generarReporteDiario(const vector<Equipo*>& atendidos)
     else if (riesgo >= 10) nivelRiesgo = "MEDIO";
     else                   nivelRiesgo = "BAJO";
 
-    // --- Consola: formato exacto del enunciado ---
+    // --- Consola: formato del enunciado ---
     cout << "Top prioridad : ";
-    for (int i = 0; i < (int)atendidos.size(); i++) {
+    for (int i = 0; i < static_cast<int>(atendidos.size()); i++) {
         cout << atendidos[i]->getID()
              << " (" << atendidos[i]->calcularPrioridad() << ")";
-        if (i < (int)atendidos.size() - 1) cout << " , ";
+        if (i < static_cast<int>(atendidos.size()) - 1) cout << " , ";
     }
     cout << "\nAsignados : ";
-    for (int i = 0; i < (int)atendidos.size(); i++) {
+    for (int i = 0; i < static_cast<int>(atendidos.size()); i++) {
         cout << atendidos[i]->getID();
-        if (i < (int)atendidos.size() - 1) cout << " , ";
+        if (i < static_cast<int>(atendidos.size()) - 1) cout << " , ";
     }
     cout << "\nBacklog pendiente : " << backlog
-         << "\nRiesgo global : " << nivelRiesgo << "\n";
+         << "\nRiesgo global : "     << nivelRiesgo << "\n";
 
-    // --- Archivo individual por dia (RF10) ---
-    // Nombre: reporte_dia_01.txt ... reporte_dia_30.txt
+    // --- Archivo individual por dia ---
     string nombreArchivo = "reporte_dia_";
     if (diaActual < 10) nombreArchivo += "0";
     nombreArchivo += to_string(diaActual) + ".txt";
@@ -559,39 +436,38 @@ void Sistema::generarReporteDiario(const vector<Equipo*>& atendidos)
     archivo << "  REPORTE DIA " << diaActual << "\n";
     archivo << "====================================================\n";
     archivo << "Dia " << diaActual << "\n";
+
     archivo << "Top prioridad : ";
-    for (int i = 0; i < (int)atendidos.size(); i++) {
+    for (int i = 0; i < static_cast<int>(atendidos.size()); i++) {
         archivo << atendidos[i]->getID()
                 << " (" << atendidos[i]->calcularPrioridad() << ")";
-        if (i < (int)atendidos.size() - 1) archivo << " , ";
+        if (i < static_cast<int>(atendidos.size()) - 1) archivo << " , ";
     }
     archivo << "\nAsignados : ";
-    for (int i = 0; i < (int)atendidos.size(); i++) {
+    for (int i = 0; i < static_cast<int>(atendidos.size()); i++) {
         archivo << atendidos[i]->getID();
-        if (i < (int)atendidos.size() - 1) archivo << " , ";
+        if (i < static_cast<int>(atendidos.size()) - 1) archivo << " , ";
     }
     archivo << "\nBacklog pendiente : " << backlog
-            << "\nRiesgo global : " << nivelRiesgo << "\n";
+            << "\nRiesgo global : "     << nivelRiesgo << "\n";
 
     archivo << "\n--- Detalle equipos atendidos ---\n";
-    for (Equipo* eq : atendidos) {
+    for (Equipo* eq : atendidos)
         archivo << "  " << eq->getID()
-                << " | prioridad=" << eq->calcularPrioridad()
-                << " | estado="    << eq->getEstado()
+                << " | prioridad="   << eq->calcularPrioridad()
+                << " | estado="      << eq->getEstado()
                 << " | incidencias=" << eq->getCantidadIncidencias() << "\n";
-    }
 
     archivo << "\n--- Equipos pendientes con incidencias ---\n";
     for (Equipo* eq : inventario) {
         bool atendido = false;
         for (Equipo* at : atendidos)
             if (at->getID() == eq->getID()) { atendido = true; break; }
-        if (!atendido && eq->getCantidadIncidencias() > 0) {
+        if (!atendido && eq->getCantidadIncidencias() > 0)
             archivo << "  " << eq->getID()
-                    << " | prioridad=" << eq->calcularPrioridad()
-                    << " | estado="    << eq->getEstado()
+                    << " | prioridad="   << eq->calcularPrioridad()
+                    << " | estado="      << eq->getEstado()
                     << " | incidencias=" << eq->getCantidadIncidencias() << "\n";
-        }
     }
 
     archivo << "====================================================\n";
