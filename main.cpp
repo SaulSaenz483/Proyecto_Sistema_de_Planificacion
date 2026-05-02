@@ -1,3 +1,7 @@
+// Sistema de Planificación Inteligente de Mantenimiento
+// Daniel Castillo Jiménez
+// Saul Sáenz Vargas
+
 #include <iostream>
 #include "Sistema.h"
 #include "Excepciones.h"
