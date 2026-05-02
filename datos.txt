@@ -102,3 +102,5 @@ EQ-097;criticidad=1;estado=100
 EQ-098;criticidad=1;estado=100
 EQ-099;criticidad=1;estado=100
 EQ-100;criticidad=1;estado=100
+
+INC;EQ-001;severidad=MEDIA;dia=1

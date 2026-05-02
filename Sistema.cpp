@@ -26,7 +26,7 @@ Sistema::~Sistema()
 }
 
 // ================================================================
-// Fabricas (static — no usan atributos de la clase)
+// Fabricas
 // ================================================================
 
 Equipo* Sistema::fabricarEquipo(const string& linea)
@@ -406,7 +406,7 @@ void Sistema::generarReporteDiario(const vector<Equipo*>& atendidos) const
     else if (riesgo >= 10) nivelRiesgo = "MEDIO";
     else                   nivelRiesgo = "BAJO";
 
-    // --- Consola: formato del enunciado ---
+    // --- Consola ---
     cout << "Top prioridad : ";
     for (int i = 0; i < static_cast<int>(atendidos.size()); i++) {
         cout << atendidos[i]->getID()

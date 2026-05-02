@@ -13,7 +13,7 @@ class Equipo;
 class EstrategiaMantenimiento {
 public:
     virtual ~EstrategiaMantenimiento() = default;
-    // El método puro que obliga a las hijas a implementarlo
+    // El metodo puro que obliga a las hijas a implementarlo
     virtual void ejecutarMantenimiento(Equipo* eq) = 0;
 };
 
